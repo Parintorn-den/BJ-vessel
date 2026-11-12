@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ติดตามสถานะเรือ | B.J. Interfreight</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#e9eff2;--paper:#f6f9fa;--ink:#102a43;--mute:#52667a;--line:#b9cbd6;--route:#1f6f8b;--amber:#d98e04;--amber-bg:#fff3d1;--ok:#1b7a4b;--err:#b42318;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1b2a;--paper:#13263a;--ink:#e6eef5;--mute:#9db1c3;--line:#2c4560;--route:#5bb5d1;--amber:#f0b429;--amber-bg:#3a2e0f;--ok:#4cc38a;--err:#ff8a7a}}
+:root[data-theme="dark"]{--bg:#0d1b2a;--paper:#13263a;--ink:#e6eef5;--mute:#9db1c3;--line:#2c4560;--route:#5bb5d1;--amber:#f0b429;--amber-bg:#3a2e0f;--ok:#4cc38a;--err:#ff8a7a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 "IBM Plex Sans Thai",system-ui,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:10px;font-weight:600;font-size:18px}
+header small{font-weight:400;color:var(--mute);font-size:14px}
+h1{font-size:clamp(28px,5vw,42px);line-height:1.2;margin:26px 0 6px;font-weight:600}
+.lead{color:var(--mute);margin:0 0 20px;max-width:60ch}
+form{background:var(--paper);border:1px solid var(--line);padding:18px;display:grid;gap:14px;grid-template-columns:1fr}
+@media(max-width:720px){form{grid-template-columns:1fr}}
+label{display:grid;gap:4px;font-weight:500;font-size:14px}
+input{font:inherit;padding:10px 12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:2px}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--amber);outline-offset:1px}
+.actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;cursor:pointer}
+.go{background:var(--ink);color:var(--bg);border:0;padding:11px 22px;font-weight:600;border-radius:2px}
+.pick{background:var(--paper);color:var(--ink);border:1px solid var(--line);padding:6px 12px;border-radius:2px;font-size:14px}
+.err{color:var(--err);font-weight:500;margin:14px 0 0}
+.note{color:var(--mute);font-size:13px;margin:8px 0 0}
+.status{margin-top:26px;padding:14px 18px;background:var(--paper);border:1px solid var(--line);border-left:6px solid var(--route)}
+.status.done{border-left-color:var(--ok)}.status.wait{border-left-color:var(--amber)}
+.status h2{margin:0;font-size:21px}.status p{margin:2px 0 0;color:var(--mute);font-size:14px}
+.meta{margin:12px 0;color:var(--mute);font-size:14px}.meta b{color:var(--ink);font-weight:500}
+.tl{margin:18px 0 0 10px;border-left:3px solid var(--line)}
+.node{position:relative;padding:2px 0 2px 24px;font-weight:600}
+.node::before{content:"";position:absolute;left:-11px;top:8px;width:16px;height:16px;border-radius:50%;background:var(--paper);border:3px solid var(--route)}
+.node.on::before{background:var(--route)}
+.seg{margin:6px 0 6px 24px;padding:10px 14px;background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--line);font-size:14px}
+.seg.done{border-left-color:var(--ok)}.seg.go{border-left-color:var(--amber)}.seg.over{border-left-color:var(--err)}
+.seg .v{font-weight:600;font-size:15px}
+.badge{display:inline-block;font-size:12px;padding:0 8px;border:1px solid var(--line);border-radius:99px;color:var(--mute);margin-right:6px}
+.row{display:flex;flex-wrap:wrap;gap:2px 22px;margin-top:4px}
+.tag{display:inline-block;font-size:12px;padding:0 7px;border-radius:99px;border:1px solid var(--line);margin-left:6px;color:var(--mute)}
+.tag.ok{border-color:var(--ok);color:var(--ok)}
+.seg a{color:var(--route);font-size:13px}
+.remark{margin-top:18px;padding:12px 16px;background:var(--amber-bg);border-left:6px solid var(--amber);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><span>B.J. Interfreight</span><small>Vessel Status</small></header>
+<h1>เรือของคุณอยู่ตรงไหนแล้ว</h1>
+<p class="lead">กรอกเลข Booking ให้ตรงกับเอกสารการจอง เพื่อดูเส้นทางและกำหนดการเรือที่บรรทุกตู้สินค้าของคุณ</p>
+<form id="f" novalidate>
+<label>เลข Booking<input id="bk" autocomplete="off" required></label>
+<div class="actions"><button class="go" id="go" type="submit">ตรวจสอบสถานะ</button></div>
+</form>
+<div id="msg"></div>
+<div id="result" aria-live="polite"></div>
+</div>
+<script>
+var API="https://script.google.com/macros/s/AKfycbwPGoSyjIDdkr2b4Vs5zONZvYG3L6QbmQxdYeQq7hjZV2HBEpcQeJLpUkNDZK14v-S8mQ/exec"; /* วางลิงก์ Web app ของ Apps Script (ลงท้ายด้วย /exec) */
+var TH=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+var MON="jan feb mar apr may jun jul aug sep oct nov dec".split(" ");
+var $=function(i){return document.getElementById(i)};
+var norm=function(s){return String(s).toLowerCase().replace(/[\s\-_.,()\/]/g,"")};
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function today(){var n=new Date();return Date.UTC(n.getFullYear(),n.getMonth(),n.getDate())}
+function fdt(d){var x=new Date(d);return x.getUTCDate()+" "+TH[x.getUTCMonth()]+" "+x.getUTCFullYear()}
+function st(l,T){var a=l.arr.k==="date"&&l.arr.conf&&l.arr.d<=T,d=l.dep.k==="date"&&l.dep.d<=T;
+ if(a)return"done";if(d&&l.dep.conf)return"go";if(d)return"over";return"plan"}
+function status(b){var T=today(),L=b.legs,i;
+ for(i=0;i<L.length;i++)if(st(L[i],T)!=="done")break;
+ if(i===L.length)return{c:"done",t:"ถึงปลายทางแล้ว",s:L[L.length-1].to};
+ var l=L[i],s=st(l,T),ds=l.arr.k==="date"?" · ถึงประมาณ "+fdt(l.arr.d):"";
+ if(s==="go")return{c:"",t:"เรืออยู่ระหว่างเดินทาง",s:(l.v||"เรือ")+" · "+l.from+" → "+l.to+ds};
+ if(s==="over")return{c:"wait",t:"ถึงกำหนดออกเดินทางแล้ว รอการยืนยัน",s:l.from+" → "+l.to};
+ if(i>0)return{c:"wait",t:l.kind==="truck"?"รอขนส่งทางบกต่อ":"จอดที่ท่าพัก รอต่อเรือ",s:L[i-1].to+" · ลำถัดไป: "+(l.v||"รอการอัปเดต")};
+ return{c:"wait",t:"ยังไม่ออกเดินทาง",s:l.from+(l.dep.k==="date"?" · ออกประมาณ "+fdt(l.dep.d):"")}}
+function dtag(x){if(x.k==="date")return fdt(x.d)+'<span class="tag'+(x.conf?' ok':'')+'">'+(x.conf?"ยืนยันแล้ว":"ประมาณการ")+'</span>';
+ return x.k==="wait"?'<span class="tag">รอการอัปเดต</span>':"-"}
+var KL={feeder:"Feeder",mother:"Mother vessel",vessel:"เรือ",truck:"ทางบก"};
+function render(b){var T=today(),L=b.legs,h='';
+ var first=b.bk.split("\n")[0];
+ var names=L.filter(function(l){return l.v&&l.kind!=="truck"}).map(function(l){return l.v});
+ h+='<div class="status"><h2>เรือของ Booking นี้</h2><p>'+esc(names.join(" → ")||"ยังไม่มีชื่อเรือ รอการอัปเดต")+'</p></div>';
+ h+='<div class="meta">Booking <b>'+esc(b.bk.replace(/\n/g," / "))+'</b> · ลูกค้า <b>'+esc(b.cust)+'</b></div><div class="tl">';
+ h+='<div class="node'+(st(L[0],T)!=="plan"?' on':'')+'">'+esc(L[0].from)+'</div>';
+ L.forEach(function(l){var k=st(l,T),nm=l.v.replace(/\s+V\.?\s*\S+$/i,"");
+  h+='<div class="seg '+k+'"><span class="badge">'+KL[l.kind]+'</span><span class="v">'+esc(l.v||(l.kind==="truck"?"Trucking":"รอการอัปเดตชื่อเรือ"))+'</span>'+
+   '<div class="row"><span>ออก: '+dtag(l.dep)+'</span><span>ถึง: '+dtag(l.arr)+'</span></div>'+'</div>';
+  h+='<div class="node'+(k==="done"?' on':'')+'">'+esc(l.to)+'</div>'});
+ h+='</div><div class="remark"><b>หมายเหตุ:</b> ข้อมูลมาจากกำหนดการที่ทีมงานอัปเดต (ข้อมูล ณ วันที่ '+fdt(T)+') และอาจไม่ถูกต้อง 100% กำหนดการอาจเปลี่ยนแปลงได้ กรุณายืนยันกับทีม CS ของ B.J. Interfreight ก่อนตัดสินใจเรื่องสำคัญ</div>';
+ $("result").innerHTML=h;$("result").scrollIntoView({behavior:"smooth",block:"start"})}
+
+function showErr(m){$("result").innerHTML="";$("msg").innerHTML='<p class="err">'+m+'</p>'}
+var cd=null,NF="ไม่พบข้อมูล ตรวจสอบเลข Booking ให้ตรงกับเอกสาร หรือติดต่อทีม CS ของ B.J. Interfreight";
+function cooldown(){var n=5,go=$("go");$("result").innerHTML="";go.disabled=true;clearInterval(cd);
+ function tick(){$("msg").innerHTML='<p class="err">'+NF+'<br>โปรดลองใหม่อีกครั้งในอีก <b>'+n+'</b> วินาที</p>';go.textContent="ลองใหม่ได้ใน "+n+" วินาที"}
+ tick();cd=setInterval(function(){n--;
+  if(n<=0){clearInterval(cd);cd=null;go.disabled=false;go.textContent="ตรวจสอบสถานะ";$("msg").innerHTML='<p class="err">'+NF+'</p>'}else tick()},1000)}
+$("f").addEventListener("submit",function(e){e.preventDefault();if(cd)return;$("msg").innerHTML="";
+ var bk=$("bk").value.trim();
+ if(!bk){showErr("กรอกเลข Booking");return}
+ if(!API){showErr("ยังไม่ได้ตั้งค่าลิงก์ API ในไฟล์ index.html");return}
+ var go=$("go");go.disabled=true;go.textContent="กำลังตรวจสอบ...";
+ fetch(API+"?bk="+encodeURIComponent(bk)).then(function(r){return r.json()})
+ .then(function(j){
+  if(j.ok){render(j.b)}
+  else if(j.error==="busy")showErr("มีการค้นหาที่ไม่สำเร็จมากเกินไป กรุณาลองใหม่ในอีกสักครู่");
+  else if(j.error)showErr("ระบบขัดข้อง กรุณาลองใหม่ภายหลัง หรือติดต่อทีม CS");
+  else cooldown()})
+ .catch(function(){showErr("เชื่อมต่อระบบไม่ได้ กรุณาลองใหม่ภายหลัง")})
+ .then(function(){if(!cd){go.disabled=false;go.textContent="ตรวจสอบสถานะ"}})});
+</script>
+</body>
+</html>
